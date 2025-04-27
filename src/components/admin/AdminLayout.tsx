@@ -36,17 +36,20 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Wait until mounted to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
+    setIsCollapsed(window.innerWidth < 1024);
   }, []);
 
   const toggleDarkMode = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    if (mounted) {
+      setTheme(theme === "dark" ? "light" : "dark");
+    }
   };
 
   const handleLogout = () => {
@@ -74,16 +77,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="min-h-screen flex">
       {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
-        <CollapsibleTrigger asChild onClick={() => setIsCollapsed(!isCollapsed)}>
-          <Button variant="outline" size="icon">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </CollapsibleTrigger>
+        <Button variant="outline" size="icon" onClick={() => setIsCollapsed(!isCollapsed)}>
+          <Menu className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Sidebar */}
-      <Collapsible
-        open={!isCollapsed}
+      <Collapsible 
+        open={!isCollapsed} 
         onOpenChange={(open) => setIsCollapsed(!open)}
         className="lg:relative lg:block"
       >
@@ -128,37 +129,39 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             </nav>
 
             {/* User & Logout Section */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                    {user?.username.charAt(0).toUpperCase()}
+            {mounted && user && (
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-medium">{user.username}</div>
+                      <div className="text-xs text-muted-foreground capitalize">{user.role}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-medium">{user?.username}</div>
-                    <div className="text-xs text-muted-foreground capitalize">{user?.role}</div>
-                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2 justify-start"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
                 </div>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full mt-2 justify-start"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
               </div>
-            </div>
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
 
       {/* Main Content */}
-      <main className="flex-1 p-6 lg:pl-72">
+      <main className={`flex-1 p-6 ${!isCollapsed ? "lg:ml-64" : ""}`}>
         <div className="max-w-7xl mx-auto">
-          {children}
+          {mounted && children}
         </div>
       </main>
     </div>
