@@ -1,20 +1,13 @@
-
 import { Activity, AlertCircle, CheckCircle, Edit, File, Image, Mail, Package, Settings, Wrench } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { useWebsiteStats } from "@/hooks/useWebsiteStats";
 
 const AdminDashboard = () => {
-  // Mock data for the dashboard
-  const websiteStatus = {
-    status: "online",
-    lastUpdated: "2023-04-27T10:30:00Z",
-    visitsToday: 245,
-    pendingMessages: 3,
-    recentUpdates: true
-  };
-
+  const { visitsToday, pendingMessages, lastChecked } = useWebsiteStats();
+  
   const quickAccessModules = [
     { name: "Pages", icon: File, link: "/admin/pages", description: "Manage website pages" },
     { name: "Products", icon: Package, link: "/admin/products", description: "Update product listings" },
@@ -24,15 +17,13 @@ const AdminDashboard = () => {
     { name: "Settings", icon: Settings, link: "/admin/settings", description: "Configure website settings" },
   ];
 
-  // Format the last updated date
-  const lastUpdatedDate = new Date(websiteStatus.lastUpdated);
   const formattedLastUpdated = new Intl.DateTimeFormat('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: 'numeric'
-  }).format(lastUpdatedDate);
+  }).format(lastChecked);
 
   return (
     <div>
@@ -47,7 +38,7 @@ const AdminDashboard = () => {
       <Card className="mb-8">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" /> 
+            <Activity className="h-5 w-5" />
             Website Status
           </CardTitle>
           <CardDescription>Current status of your website</CardDescription>
@@ -57,15 +48,9 @@ const AdminDashboard = () => {
             <div className="space-y-1">
               <div className="flex items-center">
                 <span className="font-medium mr-2">Status:</span>
-                {websiteStatus.status === "online" ? (
-                  <Badge className="bg-green-500">
-                    <CheckCircle className="h-3 w-3 mr-1" /> Online
-                  </Badge>
-                ) : (
-                  <Badge variant="destructive">
-                    <AlertCircle className="h-3 w-3 mr-1" /> Offline
-                  </Badge>
-                )}
+                <Badge className="bg-green-500">
+                  <CheckCircle className="h-3 w-3 mr-1" /> Online
+                </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
                 Last system check: {formattedLastUpdated}
@@ -73,21 +58,21 @@ const AdminDashboard = () => {
             </div>
             <div className="flex items-center gap-2">
               <div className="text-center px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md">
-                <p className="text-2xl font-bold">{websiteStatus.visitsToday}</p>
+                <p className="text-2xl font-bold">{visitsToday}</p>
                 <p className="text-xs text-muted-foreground">Visits Today</p>
               </div>
               <div className="text-center px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md">
-                <p className="text-2xl font-bold">{websiteStatus.pendingMessages}</p>
+                <p className="text-2xl font-bold">{pendingMessages}</p>
                 <p className="text-xs text-muted-foreground">New Messages</p>
               </div>
             </div>
           </div>
 
-          {websiteStatus.recentUpdates && (
+          {pendingMessages > 0 && (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 rounded-md text-sm flex items-start">
               <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
               <div>
-                <span className="font-medium">System Notice:</span> Content updates are pending publication. Please review and publish when ready.
+                <span className="font-medium">System Notice:</span> You have {pendingMessages} unread message{pendingMessages !== 1 ? 's' : ''}. Please review when ready.
               </div>
             </div>
           )}
