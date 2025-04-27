@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -25,6 +25,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger, 
 } from "@/components/ui/collapsible";
+import { useTheme } from "next-themes";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -36,11 +37,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const { toast } = useToast();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Wait until mounted to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   const handleLogout = () => {
@@ -65,7 +71,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   ];
 
   return (
-    <div className={`min-h-screen flex ${isDarkMode ? "dark" : ""}`}>
+    <div className="min-h-screen flex">
       {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <CollapsibleTrigger asChild onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -90,7 +96,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   Saint Woven
                 </h2>
                 <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  {mounted && theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button>
               </div>
               <div className="text-sm text-muted-foreground">Admin Panel</div>
