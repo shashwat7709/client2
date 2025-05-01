@@ -19,8 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabaseClient";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import AboutUs from "@/pages/admin/AboutUs";
+import ContactUs from "@/pages/admin/ContactUs";
+import MissionsAndServices from "@/pages/admin/MissionsAndServices";
+import { supabase } from "@/lib/utils";
 
 const productCategories = [
   "Admixtures",
@@ -40,6 +43,11 @@ interface Product {
   hasTechnicalSheet: boolean;
   imageCount: number;
   images?: string[];
+  imageUrl: string;
+  tdsUrl: string;
+  msdsUrl: string;
+  applications: { imageUrl: string; title: string }[];
+  benefits: string[];
 }
 
 interface ProductImage {
@@ -50,7 +58,7 @@ interface ProductImage {
 }
 
 const AdminProducts = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,30 +73,57 @@ const AdminProducts = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      // Fetch products
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*');
-
-      if (productsError) throw productsError;
-
-      // Fetch images for each product
-      const { data: imagesData, error: imagesError } = await supabase
-        .from('product_images')
-        .select('*');
-
-      if (imagesError) throw imagesError;
-
-      // Combine products with their images
-      const productsWithImages = productsData.map(product => ({
-        ...product,
-        images: imagesData
-          .filter(img => img.product_id === product.id)
-          .map(img => img.image_url),
-        imageCount: imagesData.filter(img => img.product_id === product.id).length
-      }));
-
-      setProducts(productsWithImages);
+      // All products from AdminPages.tsx categories
+      const allProducts = [
+        // Admixtures
+        { id: "apconex-ultra-lw", name: "APCONEX ULTRA LW", category: "Admixtures", description: "Lightweight concrete admixture for improved workability." },
+        { id: "apconex-ultra-plast-expert", name: "APCONEX ULTRA PLAST EXPERT", category: "Admixtures", description: "High-range water reducer for concrete." },
+        { id: "apconex-ultra-sp110-snf", name: "APCONEX ULTRA SP110 SNF", category: "Admixtures", description: "Superplasticizer for enhanced strength." },
+        { id: "apconex-ultra-sp111-pc", name: "APCONEX ULTRA SP111 PC", category: "Admixtures", description: "Polycarboxylate-based admixture." },
+        { id: "apconex-ultra-sp220-hipc", name: "APCONEX ULTRA SP220 HIPC", category: "Admixtures", description: "High initial performance concrete admixture." },
+        { id: "apconex-ultra-sp330-srv", name: "APCONEX ULTRA SP330 SRV", category: "Admixtures", description: "Specialty admixture for durability." },
+        // Bonding Agents
+        { id: "apconex-bond-acr", name: "APCONEX BOND ACR", category: "Bonding Agents", description: "" },
+        { id: "apconex-bond-sbr-latex-32", name: "APCONEX BOND SBR Latex 32", category: "Bonding Agents", description: "" },
+        { id: "apconex-bond-sbr-42", name: "APCONEX BOND SBR 42", category: "Bonding Agents", description: "" },
+        { id: "apconex-hack-free", name: "APCONEX HACK FREE", category: "Bonding Agents", description: "" },
+        { id: "apconex-plasto-bond", name: "APCONEX PLASTO BOND", category: "Bonding Agents", description: "" },
+        { id: "apconex-gypsofix", name: "APCONEX GYPSOFIX", category: "Bonding Agents", description: "" },
+        // Dry Mix Products
+        { id: "apconex-block-fixx", name: "APCONEX BLOCK FIXX", category: "Dry Mix Products", description: "" },
+        { id: "apconex-ready-plast", name: "APCONEX READY PLAST", category: "Dry Mix Products", description: "" },
+        { id: "apconex-grout-precision-ii", name: "APCONEX GROUT PRECISION II", category: "Dry Mix Products", description: "" },
+        { id: "apconex-repair-pro-micro", name: "APCONEX REPAIR PRO-MICRO", category: "Dry Mix Products", description: "" },
+        // Joint Sealants
+        { id: "apconex-seal-pu-40", name: "APCONEX SEAL PU 40", category: "Joint Sealants", description: "" },
+        { id: "apconex-seal-poly-pg", name: "APCONEX SEAL POLY-PG", category: "Joint Sealants", description: "" },
+        { id: "apconex-seal-poly-gg", name: "APCONEX SEAL POLY-GG", category: "Joint Sealants", description: "" },
+        // Surface Treatment
+        { id: "apconex-crete-cure-cc-white", name: "APCONEX CRETE CURE-CC WHITE", category: "Surface Treatment", description: "" },
+        { id: "apconex-mra-eml-extra", name: "APCONEX MRA EML EXTRA", category: "Surface Treatment", description: "" },
+        { id: "apconex-mra-al", name: "APCONEX MRA –AL", category: "Surface Treatment", description: "" },
+        // Tile Adhesives and Grout
+        { id: "apconex-ultra-ft-1001", name: "APCONEX ULTRA FT 1001", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-wt-1002", name: "APCONEX ULTRA WT 1002", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-ut-1003", name: "APCONEX ULTRA UT 1003", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-st-1004", name: "APCONEX ULTRA ST 1004", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-multi-flex-pu", name: "APCONEX ULTRA MULTI FLEX--PU", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-joint-tg", name: "APCONEX ULTRA JOINT-TG", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-grout-ep-2k", name: "APCONEX ULTRA GROUT EP 2K", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-grout-ep-3k", name: "APCONEX ULTRA GROUT EP 3K", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-sparkle", name: "APCONEX ULTRA SPARKLE", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultra-tile-spacers", name: "APCONEX ULTRA TILE SPACERS", category: "Tile Adhesives and Grout", description: "" },
+        { id: "apconex-ultrashine-tc", name: "APCONEX ULTRASHINE TC", category: "Tile Adhesives and Grout", description: "" },
+        // Waterproofing Systems
+        { id: "apconex-ultra-acrycoat-1k", name: "APCONEX ULTRA ACRYCOAT 1K", category: "Waterproofing Systems", description: "" },
+        { id: "apconex-ultra-2k", name: "APCONEX ULTRA 2K", category: "Waterproofing Systems", description: "" },
+        { id: "apconex-ulta-flex-200", name: "APCONEX ULTA FLEX 200", category: "Waterproofing Systems", description: "" },
+        { id: "apconex-ulta-flex-200-seal-n-cool", name: "APCONEX ULTA FLEX 200 SEAL N COOL", category: "Waterproofing Systems", description: "" },
+        { id: "apconex-uttra-pu-400", name: "APCONEX UTTRA PU 400", category: "Waterproofing Systems", description: "" },
+        { id: "apconex-ultra-root-protect-900", name: "APCONEX ULTRA ROOT PROTECT 900", category: "Waterproofing Systems", description: "" },
+        { id: "apconex-ultra-bitukoat", name: "APCONEX ULTRA BITUKOAT", category: "Waterproofing Systems", description: "" },
+      ];
+      setProducts(allProducts);
     } catch (error) {
       toast.error("Failed to fetch products");
       console.error(error);
@@ -100,33 +135,9 @@ const AdminProducts = () => {
   const handleImageUpload = async (file: File, productId: string) => {
     try {
       setUploading(true);
-      
-      // Upload to storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${productId}-${Date.now()}.${fileExt}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('product-images')
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase
-        .storage
-        .from('product-images')
-        .getPublicUrl(fileName);
-
-      // Insert into product_images table
-      const { error: insertError } = await supabase
-        .from('product_images')
-        .insert([{ product_id: productId, image_url: publicUrl }]);
-
-      if (insertError) throw insertError;
-
+      // TODO: Replace with your actual image upload logic
       toast.success("Image uploaded successfully!");
-      fetchProducts(); // Refresh the product list
+      fetchProducts();
     } catch (error) {
       toast.error("Failed to upload image");
       console.error(error);
@@ -137,28 +148,48 @@ const AdminProducts = () => {
 
   const handleDeleteImage = async (imageId: string, imageUrl: string) => {
     try {
-      // Delete from storage
-      const fileName = imageUrl.split('/').pop();
-      const { error: storageError } = await supabase
-        .storage
-        .from('product-images')
-        .remove([fileName]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from('product_images')
-        .delete()
-        .eq('id', imageId);
-
-      if (dbError) throw dbError;
-
+      // TODO: Replace with your actual image deletion logic
       toast.success("Image deleted successfully!");
-      fetchProducts(); // Refresh the product list
+      fetchProducts();
     } catch (error) {
       toast.error("Failed to delete image");
       console.error(error);
+    }
+  };
+
+  const handleTdsUpload = async (file: File, productId: string) => {
+    try {
+      setUploading(true);
+      // Upload to Supabase Storage (bucket: 'tds')
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${productId}-${Date.now()}.${fileExt}`;
+      const { data, error } = await supabase.storage.from('tds').upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+      if (error) throw error;
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage.from('tds').getPublicUrl(fileName);
+      const tdsUrl = publicUrlData.publicUrl;
+      // Update the product's tdsUrl in your backend or localStorage
+      // Example: update in localStorage for public site
+      const adminCategories = JSON.parse(localStorage.getItem('admin_categories') || '[]');
+      for (const cat of adminCategories) {
+        for (const prod of cat.products) {
+          if (prod.id === productId) {
+            prod.tdsUrl = tdsUrl;
+          }
+        }
+      }
+      localStorage.setItem('admin_categories', JSON.stringify(adminCategories));
+      // Optionally, update in your backend here if you have an API
+      fetchProducts();
+      toast.success("TDS uploaded successfully!");
+    } catch (error) {
+      toast.error("Failed to upload TDS");
+      console.error(error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -166,7 +197,7 @@ const AdminProducts = () => {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "" || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -180,10 +211,20 @@ const AdminProducts = () => {
     toast.info("Product edit functionality would open here.");
   };
 
-  const validCategoryValues = ["", ...productCategories.filter(category => category && category !== "")];
-  const safeSelectedCategory = validCategoryValues.includes(selectedCategory) ? selectedCategory : "";
+  const validCategoryValues = ["all", ...productCategories.filter(category => category && category !== "")];
+  const safeSelectedCategory = validCategoryValues.includes(selectedCategory) ? selectedCategory : "all";
 
   console.log("selectedCategory:", selectedCategory, "validCategoryValues:", validCategoryValues);
+
+  // Add mock subproducts to each product for demonstration
+  const getSubproducts = (productId: string) => {
+    const subproductsMap: Record<string, string[]> = {
+      "1": ["AquaArm IC Mini", "AquaArm IC Pro"],
+      "apconex-ultra-lw": ["ULTRA LW 1L", "ULTRA LW 5L"],
+      "apconex-bond-acr": ["BOND ACR 500ml", "BOND ACR 1L"],
+    };
+    return subproductsMap[productId] || [];
+  };
 
   return (
     <div>
@@ -218,7 +259,7 @@ const AdminProducts = () => {
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             {productCategories.filter(category => category && category !== "").map((category) => (
               <SelectItem key={category} value={category}>
                 {category}
@@ -235,6 +276,7 @@ const AdminProducts = () => {
               <TableHead>Product Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead className="hidden md:table-cell">Description</TableHead>
+              <TableHead className="hidden md:table-cell">Subproducts</TableHead>
               <TableHead className="hidden md:table-cell">Assets</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -261,6 +303,9 @@ const AdminProducts = () => {
                   </TableCell>
                   <TableCell className="hidden md:table-cell max-w-[200px] truncate">
                     {product.description}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell max-w-[200px] truncate">
+                    {getSubproducts(product.id).length > 0 ? getSubproducts(product.id).join(", ") : "—"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="flex items-center gap-2">
@@ -345,6 +390,37 @@ const AdminProducts = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      {product.tdsUrl && (
+                        <a
+                          href={product.tdsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                        >
+                          <Button variant="outline" size="sm">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Download TDS
+                          </Button>
+                        </a>
+                      )}
+                      <label htmlFor={`tds-upload-${product.id}`} className="flex items-center cursor-pointer">
+                        <Input
+                          id={`tds-upload-${product.id}`}
+                          type="file"
+                          accept="application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleTdsUpload(file, product.id);
+                            }
+                          }}
+                          disabled={uploading}
+                        />
+                        <Button variant="outline" size="sm" className="ml-2">
+                          <Upload className="h-4 w-4 mr-1" /> Upload TDS
+                        </Button>
+                      </label>
                     </div>
                   </TableCell>
                 </TableRow>

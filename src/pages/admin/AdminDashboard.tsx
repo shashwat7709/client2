@@ -11,9 +11,6 @@ const AdminDashboard = () => {
   const quickAccessModules = [
     { name: "Pages", icon: File, link: "/admin/pages", description: "Manage website pages" },
     { name: "Products", icon: Package, link: "/admin/products", description: "Update product listings" },
-    { name: "Services", icon: Wrench, link: "/admin/services", description: "Edit service offerings" },
-    { name: "Media", icon: Image, link: "/admin/media", description: "Manage uploaded files" },
-    { name: "Messages", icon: Mail, link: "/admin/forms", description: "View contact submissions" },
     { name: "Settings", icon: Settings, link: "/admin/settings", description: "Configure website settings" },
   ];
 

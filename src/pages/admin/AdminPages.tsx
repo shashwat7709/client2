@@ -234,7 +234,18 @@ const AdminPages = () => {
 
   // Persist categories to localStorage on change
   React.useEffect(() => {
-    localStorage.setItem("admin_categories", JSON.stringify(categories));
+    try {
+      localStorage.setItem("admin_categories", JSON.stringify(categories));
+    } catch (error) {
+      console.warn("Failed to save categories to localStorage:", error);
+      // Clear some space if needed
+      try {
+        localStorage.removeItem("admin_categories");
+        localStorage.setItem("admin_categories", JSON.stringify(categories));
+      } catch (e) {
+        console.error("Failed to clear and save categories:", e);
+      }
+    }
   }, [categories]);
 
   // Featured Projects images state
@@ -245,8 +256,12 @@ const AdminPages = () => {
 
   // Load featured images from localStorage on mount
   React.useEffect(() => {
-    const saved = localStorage.getItem('featured_project_images');
-    if (saved) setFeaturedImages(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('featured_project_images');
+      if (saved) setFeaturedImages(JSON.parse(saved));
+    } catch (error) {
+      console.warn("Failed to load featured images from localStorage:", error);
+    }
   }, []);
 
   // Add featured image handler
@@ -565,6 +580,24 @@ const AdminPages = () => {
                                 ref={el => (productFileInputRefs.current[`${catIdx}-${prodIdx}`] = el)}
                                 style={{ display: "none" }}
                                 onChange={e => handleProductImageChange(catIdx, prodIdx, e)}
+                              />
+                              <textarea
+                                className="mt-3 p-2 border rounded text-sm resize-vertical min-h-[60px]"
+                                placeholder="Enter product description..."
+                                value={product.description || ""}
+                                onChange={e => {
+                                  const newDesc = e.target.value;
+                                  setCategories(prev => prev.map((cat, i) =>
+                                    i === catIdx
+                                      ? {
+                                          ...cat,
+                                          products: cat.products.map((prod, j) =>
+                                            j === prodIdx ? { ...prod, description: newDesc } : prod
+                                          )
+                                        }
+                                      : cat
+                                  ));
+                                }}
                               />
                               <div className="flex gap-2 mt-2">
                                 <Button

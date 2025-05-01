@@ -1,4 +1,3 @@
-
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,15 +6,16 @@ import {
   FileText, 
   Package, 
   Wrench, 
-  Image, 
-  Search, 
   Mail, 
   Users, 
   Settings,
   LogOut,
   Menu,
   Sun,
-  Moon
+  Moon,
+  Info,
+  Phone,
+  Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,39 +39,71 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   // Wait until mounted to avoid hydration mismatch
   useEffect(() => {
-    setMounted(true);
-    setIsCollapsed(window.innerWidth < 1024);
+    try {
+      setMounted(true);
+      setIsCollapsed(window.innerWidth < 1024);
+    } catch (err) {
+      setError(err as Error);
+      console.error("Error in AdminLayout mount:", err);
+    }
   }, []);
 
   const toggleDarkMode = () => {
-    if (mounted) {
-      setTheme(theme === "dark" ? "light" : "dark");
+    try {
+      if (mounted) {
+        setTheme(theme === "dark" ? "light" : "dark");
+      }
+    } catch (err) {
+      console.error("Error toggling dark mode:", err);
+      toast({
+        title: "Error",
+        description: "Failed to toggle theme",
+        variant: "destructive",
+      });
     }
   };
 
   const handleLogout = () => {
-    logout();
-    navigate("/admin/login");
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
+    try {
+      logout();
+      navigate("/admin/login");
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (err) {
+      console.error("Error during logout:", err);
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    }
   };
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
     { icon: FileText, label: "Pages", path: "/admin/pages" },
     { icon: Package, label: "Products", path: "/admin/products" },
-    { icon: Wrench, label: "Services", path: "/admin/services" },
-    { icon: Image, label: "Media", path: "/admin/media" },
-    { icon: Search, label: "SEO", path: "/admin/seo" },
-    { icon: Mail, label: "Forms", path: "/admin/forms" },
     { icon: Users, label: "Users", path: "/admin/users" },
     { icon: Settings, label: "Settings", path: "/admin/settings" },
   ];
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-destructive mb-4">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">{error.message}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -94,7 +126,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <div className="p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-primary">
-                  Saint Woven
+                  APCONEX Constrolink LLP
                 </h2>
                 <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
                   {mounted && theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}

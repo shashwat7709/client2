@@ -18,13 +18,6 @@ const ProductDetail = () => {
     }
   }
 
-  let images = [];
-  try {
-    images = JSON.parse(localStorage.getItem(`public_product_images_${product.id}`) || "[]");
-  } catch {
-    images = [];
-  }
-
   if (!product) {
     return (
       <div className="p-8 text-center">
@@ -35,41 +28,89 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-8">
+    <div className="max-w-5xl mx-auto p-8">
       <Button variant="outline" className="mb-4" onClick={() => navigate(-1)}>
         Back
       </Button>
-      <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
-      <div className="text-muted-foreground mb-4">Category: {category?.title}</div>
-      <div className="flex flex-col md:flex-row md:items-start md:gap-8 mb-8">
-        {images.length > 0 ? (
-          <img
-            src={images[0]}
-            alt={product.name}
-            className="w-full max-w-md h-auto rounded mb-4 md:mb-0"
-            style={{ objectFit: 'cover' }}
-          />
-        ) : (
-          <div className="w-full max-w-md h-64 bg-gray-200 rounded mb-4 md:mb-0 flex items-center justify-center text-gray-400">No Image</div>
-        )}
-        <div className="flex-1 text-lg text-gray-700">
-          {/* Description from admin, if available */}
-          {(() => {
-            let desc = "";
-            try {
-              desc = localStorage.getItem(`public_product_description_${product.id}`) || "";
-            } catch {}
-            return desc ? <div>{desc}</div> : <div className="italic text-gray-400">No description available.</div>;
-          })()}
+      <div className="flex flex-col md:flex-row gap-8 items-start mb-8">
+        <div className="flex-shrink-0 w-full md:w-1/3 flex justify-center items-start">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-64 h-64 object-contain rounded shadow bg-white"
+            />
+          ) : (
+            <div className="w-64 h-64 bg-gray-200 rounded flex items-center justify-center text-gray-400">No Image</div>
+          )}
+        </div>
+        <div className="flex-1 w-full md:w-2/3">
+          <h1 className="text-3xl font-bold mb-2 text-neutral-800">{product.name}</h1>
+          <div className="text-muted-foreground mb-2 text-lg">{product.subtitle || product.category || (category && category.title)}</div>
+          <p className="mb-4 text-base text-neutral-700">{product.description || <span className="italic text-gray-400">No description available.</span>}</p>
+          <div className="mb-4">
+            <span className="font-medium text-neutral-600">Downloads:</span>
+            <div className="mt-2">
+              {product.tdsUrl ? (
+                <a href={product.tdsUrl} download target="_blank" rel="noopener noreferrer">
+                  <Button 
+                    variant="default" 
+                    className="font-bold border-blue-600 text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    TDS
+                  </Button>
+                </a>
+              ) : (
+                <Button 
+                  variant="default" 
+                  className="font-bold border-blue-600 text-white bg-blue-400 cursor-not-allowed"
+                  disabled
+                >
+                  TDS
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+            {product.msdsUrl && (
+              <a href={product.msdsUrl} download target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="font-bold border-neutral-400 text-neutral-800 hover:bg-neutral-100">MSDS</Button>
+              </a>
+            )}
+          </div>
         </div>
       </div>
-      {/* Show all images below if more than one */}
-      {images.length > 1 && (
-        <div className="flex flex-wrap gap-4 mt-8">
-          {images.slice(1).map((img, idx) => (
-            <img key={idx} src={img} alt={product.name} className="w-40 h-40 object-cover rounded" />
-          ))}
-        </div>
+
+      {product.applications && product.applications.length > 0 && (
+        <>
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-800">Area of Applications :</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            {product.applications.map((app, idx) => (
+              <div key={idx} className="text-center">
+                {app.imageUrl ? (
+                  <img src={app.imageUrl} alt={app.title} className="w-32 h-32 object-cover mx-auto rounded" />
+                ) : (
+                  <div className="w-32 h-32 bg-gray-200 rounded flex items-center justify-center text-gray-400 mx-auto">No Image</div>
+                )}
+                <div className="font-bold text-blue-900 mt-2">{app.title}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {product.benefits && product.benefits.length > 0 && (
+        <>
+          <h2 className="text-2xl font-semibold mb-4 text-blue-800">Benefits of {product.name} :</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {product.benefits.map((benefit, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="text-green-700">👍</span>
+                <span>{benefit}</span>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
