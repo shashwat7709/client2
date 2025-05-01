@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import Products from "./pages/Products";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import ProductDetail from "./pages/ProductDetail";
 
 // Admin pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -23,6 +23,7 @@ import AdminSEO from "./pages/admin/AdminSEO";
 import AdminForms from "./pages/admin/AdminForms";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminProductDetail from "./pages/admin/AdminProductDetail";
 
 // Auth Provider
 import { AuthProvider } from "./contexts/AuthContext";
@@ -52,6 +53,7 @@ function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/services" element={<Services />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/products/:productId" element={<ProductDetail />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -60,6 +62,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/pages" element={<AdminPages />} />
+                <Route path="/admin/pages/products/:productId" element={<AdminProductDetail />} />
                 <Route path="/admin/products" element={<AdminProducts />} />
                 <Route path="/admin/services" element={<AdminServices />} />
                 <Route path="/admin/media" element={<AdminMedia />} />

@@ -1,8 +1,29 @@
-
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const Hero = () => {
+  const [heroImages, setHeroImages] = useState<any[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    // Load hero images from localStorage
+    const savedImages = localStorage.getItem('hero_images');
+    if (savedImages) {
+      setHeroImages(JSON.parse(savedImages));
+    }
+  }, []);
+
+  // Auto-rotate images every 5 seconds if there are multiple images
+  useEffect(() => {
+    if (heroImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [heroImages.length]);
+
   return (
     <div className="relative bg-gradient-to-br from-primary to-primary/90 text-white">
       {/* Abstract background pattern */}
@@ -15,7 +36,7 @@ const Hero = () => {
 
       {/* Hero content */}
       <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               High-Performance Construction Chemical Solutions
@@ -42,17 +63,23 @@ const Hero = () => {
           <div className="hidden lg:block">
             <div className="relative">
               <div className="absolute -top-10 -left-10 w-full h-full bg-accent/20 rounded-lg transform rotate-3"></div>
-              <img 
-                src="https://images.unsplash.com/photo-1487958449943-2429e8be8625" 
-                alt="Modern concrete building" 
-                className="rounded-lg shadow-xl relative z-10 w-full h-auto object-cover"
-              />
+              {heroImages.length > 0 ? (
+                <img 
+                  src={heroImages[currentImageIndex]?.url} 
+                  alt={heroImages[currentImageIndex]?.alt || "Hero banner"} 
+                  className="rounded-lg shadow-xl relative z-10 w-full h-auto object-cover"
+                />
+              ) : (
+                <div className="w-full h-64 bg-gray-200 rounded-lg shadow-xl relative z-10 flex items-center justify-center text-gray-400">
+                  No hero images available
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Highlight boxes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
             <h3 className="font-semibold text-xl mb-2">Quality Assurance</h3>
             <p className="text-white/80">All products undergo rigorous testing to meet international standards.</p>

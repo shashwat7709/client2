@@ -1,39 +1,44 @@
-
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const categories = [
   {
     id: "admixtures",
     name: "Admixtures",
     description: "Advanced concrete admixtures for enhanced durability and performance",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
     products: 6
   },
   {
     id: "bonding-agents",
     name: "Bonding Agents",
     description: "Specialized adhesives for strong, reliable substrate bonding",
-    image: "https://images.unsplash.com/photo-1486718448742-163732cd1544",
     products: 6
   },
   {
     id: "dry-mix",
     name: "Dry Mix Products",
     description: "Ready-to-use cementitious solutions for various applications",
-    image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
     products: 4
   },
   {
     id: "joint-sealants",
     name: "Joint Sealants",
     description: "Premium sealants for durable expansion and construction joints",
-    image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1",
     products: 3
   },
 ];
 
 const ProductCategories = () => {
+  const [heroImages, setHeroImages] = useState<any[]>([]);
+
+  useEffect(() => {
+    const savedImages = localStorage.getItem('hero_images');
+    if (savedImages) {
+      setHeroImages(JSON.parse(savedImages));
+    }
+  }, []);
+
   return (
     <section className="py-16 md:py-24 bg-muted">
       <div className="container mx-auto px-4">
@@ -45,14 +50,20 @@ const ProductCategories = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {categories.map((category) => (
+          {categories.map((category, idx) => (
             <div key={category.id} className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-lg">
               <div className="h-48 overflow-hidden">
-                <img 
-                  src={category.image} 
-                  alt={category.name} 
-                  className="w-full h-full object-cover"
-                />
+                {heroImages[idx] ? (
+                  <img 
+                    src={heroImages[idx].url} 
+                    alt={heroImages[idx].alt || category.name} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                    No Image
+                  </div>
+                )}
               </div>
               <div className="p-6">
                 <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
@@ -72,7 +83,6 @@ const ProductCategories = () => {
               </div>
             </div>
           ))}
-          
           {/* View All Categories */}
           <Link 
             to="/products" 

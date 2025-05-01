@@ -1,9 +1,10 @@
-
 import { useEffect } from "react";
 import Layout from "../components/layout/Layout";
 import ProductCategory from "../components/products/ProductCategory";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
-const productCategories = [
+export const productCategories = [
   {
     id: "admixtures",
     title: "Admixtures",
@@ -177,6 +178,42 @@ const Products = () => {
         </div>
       </section>
     </Layout>
+  );
+};
+
+const ProductDetail = () => {
+  const { productId } = useParams();
+  const navigate = useNavigate();
+
+  let product = null;
+  let category = null;
+  for (const cat of productCategories) {
+    const found = cat.products.find((p) => p.id === productId);
+    if (found) {
+      product = found;
+      category = cat;
+      break;
+    }
+  }
+
+  if (!product) {
+    return (
+      <div className="p-8 text-center">
+        <div className="mb-4">Product not found.</div>
+        <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto p-8">
+      <Button variant="outline" className="mb-4" onClick={() => navigate(-1)}>
+        Back
+      </Button>
+      <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
+      <div className="text-muted-foreground mb-4">Category: {category?.title}</div>
+      {/* You can add more product details here if available */}
+    </div>
   );
 };
 
