@@ -263,6 +263,42 @@ const AdminPages = () => {
     }
   }, [categories]);
 
+  // Add state for About Us company text
+  const [aboutUsCompanyText, setAboutUsCompanyText] = useState(() => {
+    return localStorage.getItem('about_us_company_text') || '';
+  });
+
+  const handleSaveAboutUsCompanyText = () => {
+    localStorage.setItem('about_us_company_text', aboutUsCompanyText);
+    toast.success('About Us company description saved!');
+  };
+
+  // Add state for Mission and Vision text
+  const [missionText, setMissionText] = useState(() => localStorage.getItem('mission_text') || '');
+  const [visionText, setVisionText] = useState(() => localStorage.getItem('vision_text') || '');
+
+  const handleSaveMissionVision = () => {
+    localStorage.setItem('mission_text', missionText);
+    localStorage.setItem('vision_text', visionText);
+    toast.success('Mission and Vision statements saved!');
+  };
+
+  // Add state for Contact page fields
+  const [contactHeadquarters, setContactHeadquarters] = useState(() => localStorage.getItem('contact_headquarters') || 'Saint Woven Saver Industries LLC');
+  const [contactAddress, setContactAddress] = useState(() => localStorage.getItem('contact_address') || 'Industrial Zone 3, Building A12\nP.O. Box 12345\nDubai, United Arab Emirates');
+  const [contactPhone, setContactPhone] = useState(() => localStorage.getItem('contact_phone') || 'Main: +971 4 123 4567\nTechnical Support: +971 4 123 4568\nSales: +971 4 123 4569');
+  const [contactEmail, setContactEmail] = useState(() => localStorage.getItem('contact_email') || 'General Inquiries: info@saintwovensaver.com\nTechnical Support: support@saintwovensaver.com\nSales: sales@saintwovensaver.com');
+  const [contactHours, setContactHours] = useState(() => localStorage.getItem('contact_hours') || 'Monday - Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 1:00 PM\nSunday: Closed');
+
+  const handleSaveContact = () => {
+    localStorage.setItem('contact_headquarters', contactHeadquarters);
+    localStorage.setItem('contact_address', contactAddress);
+    localStorage.setItem('contact_phone', contactPhone);
+    localStorage.setItem('contact_email', contactEmail);
+    localStorage.setItem('contact_hours', contactHours);
+    toast.success('Contact information saved!');
+  };
+
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -555,6 +591,17 @@ const AdminPages = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-6">
+                <label htmlFor="about-us-company-text" className="block font-medium mb-2">Our Company Description</label>
+                <textarea
+                  id="about-us-company-text"
+                  className="w-full min-h-[120px] border rounded p-2 text-sm"
+                  value={aboutUsCompanyText}
+                  onChange={e => setAboutUsCompanyText(e.target.value)}
+                  placeholder="Enter the company description to show in the About Us section on the website."
+                />
+                <Button className="mt-2" onClick={handleSaveAboutUsCompanyText}>Save</Button>
+              </div>
               <p className="text-center text-muted-foreground py-8">
                 Content editor for About Us page would appear here.
               </p>
@@ -571,6 +618,25 @@ const AdminPages = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-6">
+                <label htmlFor="mission-text" className="block font-medium mb-2">Mission Statement</label>
+                <textarea
+                  id="mission-text"
+                  className="w-full min-h-[80px] border rounded p-2 text-sm mb-4"
+                  value={missionText}
+                  onChange={e => setMissionText(e.target.value)}
+                  placeholder="Enter your company's mission statement."
+                />
+                <label htmlFor="vision-text" className="block font-medium mb-2">Vision Statement</label>
+                <textarea
+                  id="vision-text"
+                  className="w-full min-h-[80px] border rounded p-2 text-sm mb-4"
+                  value={visionText}
+                  onChange={e => setVisionText(e.target.value)}
+                  placeholder="Enter your company's vision statement."
+                />
+                <Button className="mt-2" onClick={handleSaveMissionVision}>Save</Button>
+              </div>
               <p className="text-center text-muted-foreground py-8">
                 Content editor for Mission & Vision page would appear here.
               </p>
@@ -587,6 +653,53 @@ const AdminPages = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="contact-headquarters" className="block font-medium mb-2">Headquarters</label>
+                  <input
+                    id="contact-headquarters"
+                    className="w-full border rounded p-2 text-sm mb-4"
+                    value={contactHeadquarters}
+                    onChange={e => setContactHeadquarters(e.target.value)}
+                    placeholder="Enter headquarters name"
+                  />
+                  <label htmlFor="contact-address" className="block font-medium mb-2">Address</label>
+                  <textarea
+                    id="contact-address"
+                    className="w-full min-h-[60px] border rounded p-2 text-sm mb-4"
+                    value={contactAddress}
+                    onChange={e => setContactAddress(e.target.value)}
+                    placeholder="Enter address"
+                  />
+                  <label htmlFor="contact-phone" className="block font-medium mb-2">Phone</label>
+                  <textarea
+                    id="contact-phone"
+                    className="w-full min-h-[60px] border rounded p-2 text-sm mb-4"
+                    value={contactPhone}
+                    onChange={e => setContactPhone(e.target.value)}
+                    placeholder="Enter phone numbers"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="contact-email" className="block font-medium mb-2">Email</label>
+                  <textarea
+                    id="contact-email"
+                    className="w-full min-h-[60px] border rounded p-2 text-sm mb-4"
+                    value={contactEmail}
+                    onChange={e => setContactEmail(e.target.value)}
+                    placeholder="Enter email addresses"
+                  />
+                  <label htmlFor="contact-hours" className="block font-medium mb-2">Business Hours</label>
+                  <textarea
+                    id="contact-hours"
+                    className="w-full min-h-[60px] border rounded p-2 text-sm mb-4"
+                    value={contactHours}
+                    onChange={e => setContactHours(e.target.value)}
+                    placeholder="Enter business hours"
+                  />
+                </div>
+              </div>
+              <Button className="mt-2" onClick={handleSaveContact}>Save</Button>
               <p className="text-center text-muted-foreground py-8">
                 Content editor for Contact page would appear here.
               </p>

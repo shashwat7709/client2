@@ -1,8 +1,21 @@
-
 import Layout from "../components/layout/Layout";
-import { Target, Lightbulb, Heart, Leaf } from "lucide-react";
+import { Target, Lightbulb, Heart, Leaf, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const defaultMission = `To provide innovative, high-quality construction chemical solutions that enhance the durability, efficiency, and sustainability of buildings and infrastructure.\n\nWe are committed to delivering products that meet the highest standards of performance while providing exceptional technical support to our clients.`;
+const defaultVision = `To be recognized globally as a leader in innovative construction chemical solutions, setting new standards for performance, reliability, and sustainability.\n\nWe aspire to contribute significantly to the advancement of construction technology, improving building practices worldwide.`;
 
 const Mission = () => {
+  const [missionText, setMissionText] = useState(defaultMission);
+  const [visionText, setVisionText] = useState(defaultVision);
+
+  useEffect(() => {
+    const savedMission = localStorage.getItem('mission_text');
+    const savedVision = localStorage.getItem('vision_text');
+    if (savedMission && savedMission.trim().length > 0) setMissionText(savedMission);
+    if (savedVision && savedVision.trim().length > 0) setVisionText(savedVision);
+  }, []);
+
   return (
     <Layout>
       {/* Hero section */}
@@ -26,12 +39,9 @@ const Mission = () => {
                 <Target size={32} className="text-white" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold mb-6">Our Mission</h2>
-              <p className="text-lg text-white/80 mb-4">
-                To provide innovative, high-quality construction chemical solutions that enhance the durability, efficiency, and sustainability of buildings and infrastructure.
-              </p>
-              <p className="text-lg text-white/80">
-                We are committed to delivering products that meet the highest standards of performance while providing exceptional technical support to our clients.
-              </p>
+              {missionText.split('\n').map((para, idx) => (
+                <p key={idx} className="text-lg text-white/80 mb-4">{para}</p>
+              ))}
             </div>
             
             <div className="bg-white p-8 md:p-12 rounded-lg shadow-lg border border-muted">
@@ -39,12 +49,9 @@ const Mission = () => {
                 <Lightbulb size={32} className="text-primary" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold mb-6">Our Vision</h2>
-              <p className="text-lg text-muted-foreground mb-4">
-                To be recognized globally as a leader in innovative construction chemical solutions, setting new standards for performance, reliability, and sustainability.
-              </p>
-              <p className="text-lg text-muted-foreground">
-                We aspire to contribute significantly to the advancement of construction technology, improving building practices worldwide.
-              </p>
+              {visionText.split('\n').map((para, idx) => (
+                <p key={idx} className="text-lg text-muted-foreground mb-4">{para}</p>
+              ))}
             </div>
           </div>
         </div>
@@ -145,6 +152,3 @@ const Mission = () => {
 };
 
 export default Mission;
-
-// Import for Award icon that was missed at the top
-import { Award } from "lucide-react";

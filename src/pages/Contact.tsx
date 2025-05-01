@@ -1,8 +1,33 @@
-
 import Layout from "../components/layout/Layout";
 import { Mail, Phone, MapPin, Clock, Building, Send } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const defaultHeadquarters = 'Saint Woven Saver Industries LLC';
+const defaultAddress = 'Industrial Zone 3, Building A12\nP.O. Box 12345\nDubai, United Arab Emirates';
+const defaultPhone = 'Main: +971 4 123 4567\nTechnical Support: +971 4 123 4568\nSales: +971 4 123 4569';
+const defaultEmail = 'General Inquiries: info@saintwovensaver.com\nTechnical Support: support@saintwovensaver.com\nSales: sales@saintwovensaver.com';
+const defaultHours = 'Monday - Friday: 8:00 AM - 6:00 PM\nSaturday: 9:00 AM - 1:00 PM\nSunday: Closed';
 
 const Contact = () => {
+  const [headquarters, setHeadquarters] = useState(defaultHeadquarters);
+  const [address, setAddress] = useState(defaultAddress);
+  const [phone, setPhone] = useState(defaultPhone);
+  const [email, setEmail] = useState(defaultEmail);
+  const [hours, setHours] = useState(defaultHours);
+
+  useEffect(() => {
+    const hq = localStorage.getItem('contact_headquarters');
+    const addr = localStorage.getItem('contact_address');
+    const ph = localStorage.getItem('contact_phone');
+    const em = localStorage.getItem('contact_email');
+    const hr = localStorage.getItem('contact_hours');
+    if (hq && hq.trim().length > 0) setHeadquarters(hq);
+    if (addr && addr.trim().length > 0) setAddress(addr);
+    if (ph && ph.trim().length > 0) setPhone(ph);
+    if (em && em.trim().length > 0) setEmail(em);
+    if (hr && hr.trim().length > 0) setHours(hr);
+  }, []);
+
   return (
     <Layout>
       {/* Hero section */}
@@ -114,9 +139,9 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Headquarters</h3>
-                      <p className="text-muted-foreground">
-                        Saint Woven Saver Industries LLC
-                      </p>
+                      {headquarters.split('\n').map((line, idx) => (
+                        <p key={idx} className="text-muted-foreground">{line}</p>
+                      ))}
                     </div>
                   </div>
                   
@@ -126,11 +151,9 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Address</h3>
-                      <p className="text-muted-foreground">
-                        Industrial Zone 3, Building A12<br />
-                        P.O. Box 12345<br />
-                        Dubai, United Arab Emirates
-                      </p>
+                      {address.split('\n').map((line, idx) => (
+                        <p key={idx} className="text-muted-foreground">{line}</p>
+                      ))}
                     </div>
                   </div>
                   
@@ -140,11 +163,9 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Phone</h3>
-                      <p className="text-muted-foreground">
-                        Main: +971 4 123 4567<br />
-                        Technical Support: +971 4 123 4568<br />
-                        Sales: +971 4 123 4569
-                      </p>
+                      {phone.split('\n').map((line, idx) => (
+                        <p key={idx} className="text-muted-foreground">{line}</p>
+                      ))}
                     </div>
                   </div>
                   
@@ -154,11 +175,9 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Email</h3>
-                      <p className="text-muted-foreground">
-                        General Inquiries: info@saintwovensaver.com<br />
-                        Technical Support: support@saintwovensaver.com<br />
-                        Sales: sales@saintwovensaver.com
-                      </p>
+                      {email.split('\n').map((line, idx) => (
+                        <p key={idx} className="text-muted-foreground">{line}</p>
+                      ))}
                     </div>
                   </div>
                   
@@ -168,11 +187,9 @@ const Contact = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1">Business Hours</h3>
-                      <p className="text-muted-foreground">
-                        Monday - Friday: 8:00 AM - 6:00 PM<br />
-                        Saturday: 9:00 AM - 1:00 PM<br />
-                        Sunday: Closed
-                      </p>
+                      {hours.split('\n').map((line, idx) => (
+                        <p key={idx} className="text-muted-foreground">{line}</p>
+                      ))}
                     </div>
                   </div>
                 </div>

@@ -101,41 +101,6 @@ const AdminDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* Main Page Image Card */}
-      <Card className="mb-8">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <Image className="h-5 w-5" />
-            Main Page Image
-          </CardTitle>
-          <CardDescription>Manage the main image shown on the website home page.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-6 items-center">
-            <div className="w-64 h-40 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
-              {preview ? (
-                <img src={preview} alt="Main Page Preview" className="object-contain w-full h-full" />
-              ) : (
-                <span className="text-gray-400">No image set</span>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) handleMainImageUpload(file);
-                }}
-                disabled={uploading}
-              />
-              {uploading && <span className="text-sm text-muted-foreground">Uploading...</span>}
-              <span className="text-xs text-muted-foreground">Recommended size: 800x600px or larger</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Quick Access Grid */}
       <h2 className="text-xl font-semibold mb-4">Quick Access</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -1,8 +1,19 @@
-
 import Layout from "../components/layout/Layout";
 import { Building2, Users, Award, Factory } from "lucide-react";
+import { useEffect, useState } from "react";
+
+const defaultCompanyText = `Saint Woven Saver is a premier manufacturer of construction chemicals, dedicated to providing innovative solutions for the building and construction industry. With our state-of-the-art manufacturing facilities and research laboratories, we develop products that meet the highest standards of quality and performance.\n\nFounded in 2015, we have rapidly grown to become a trusted partner for construction professionals across the Middle East and beyond. Our comprehensive range of products addresses various construction needs, from concrete admixtures to waterproofing systems and beyond.\n\nWe believe in sustainable development and continuously invest in research to develop environmentally friendly products without compromising on performance.`;
 
 const About = () => {
+  const [companyText, setCompanyText] = useState(defaultCompanyText);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('about_us_company_text');
+    if (saved && saved.trim().length > 0) {
+      setCompanyText(saved);
+    }
+  }, []);
+
   return (
     <Layout>
       {/* Hero section */}
@@ -23,15 +34,9 @@ const About = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold mb-6">Our Company</h2>
-              <p className="text-muted-foreground mb-4">
-                Saint Woven Saver is a premier manufacturer of construction chemicals, dedicated to providing innovative solutions for the building and construction industry. With our state-of-the-art manufacturing facilities and research laboratories, we develop products that meet the highest standards of quality and performance.
-              </p>
-              <p className="text-muted-foreground mb-4">
-                Founded in 2015, we have rapidly grown to become a trusted partner for construction professionals across the Middle East and beyond. Our comprehensive range of products addresses various construction needs, from concrete admixtures to waterproofing systems and beyond.
-              </p>
-              <p className="text-muted-foreground">
-                We believe in sustainable development and continuously invest in research to develop environmentally friendly products without compromising on performance.
-              </p>
+              {companyText.split('\n').map((para, idx) => (
+                <p key={idx} className="text-muted-foreground mb-4">{para}</p>
+              ))}
             </div>
             <div className="relative">
               <div className="absolute -top-4 -left-4 w-full h-full bg-muted rounded-lg"></div>
