@@ -48,13 +48,27 @@ const AdminPages = () => {
     }
   };
 
+  const MAX_HERO_IMAGES = 11;
+
+  // Add this function to reload heroImages from localStorage
+  const reloadHeroImages = () => {
+    const saved = localStorage.getItem('hero_images');
+    if (saved) setHeroImages(JSON.parse(saved));
+  };
+
   // Confirm adding the previewed image
   const handleConfirmAdd = () => {
     if (previewImage) {
+      if (heroImages.length >= MAX_HERO_IMAGES) {
+        toast.error(`Maximum image limit of ${MAX_HERO_IMAGES} reached. Please remove an image before adding a new one.`);
+        return;
+      }
       const newImage = { url: previewImage, alt: `Hero banner ${heroImages.length + 1}` };
-      setHeroImages((prev) => [...prev, newImage]);
+      const updated = [...heroImages, newImage];
+      setHeroImages(updated);
       // Save to localStorage
-      localStorage.setItem('hero_images', JSON.stringify([...heroImages, newImage]));
+      localStorage.setItem('hero_images', JSON.stringify(updated));
+      reloadHeroImages();
       setPreviewImage(null);
       setPendingFile(null);
       toast.success("Image added successfully!");
@@ -73,6 +87,7 @@ const AdminPages = () => {
       const newImages = prev.filter((_, i) => i !== index);
       // Update localStorage
       localStorage.setItem('hero_images', JSON.stringify(newImages));
+      reloadHeroImages();
       return newImages;
     });
     toast.success("Image deleted successfully!");
@@ -248,145 +263,6 @@ const AdminPages = () => {
     }
   }, [categories]);
 
-  // Featured Projects images state
-  const [featuredImages, setFeaturedImages] = useState<any[]>([]);
-  const [previewFeaturedImage, setPreviewFeaturedImage] = useState<string | null>(null);
-  const [pendingFeaturedFile, setPendingFeaturedFile] = useState<File | null>(null);
-  const featuredFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Load featured images from localStorage on mount
-  React.useEffect(() => {
-    try {
-      const saved = localStorage.getItem('featured_project_images');
-      if (saved) setFeaturedImages(JSON.parse(saved));
-    } catch (error) {
-      console.warn("Failed to load featured images from localStorage:", error);
-    }
-  }, []);
-
-  // Add featured image handler
-  const handleAddFeaturedImage = () => {
-    if (featuredFileInputRef.current) {
-      featuredFileInputRef.current.value = "";
-      featuredFileInputRef.current.click();
-    }
-  };
-
-  // Validate and preview featured image before adding
-  const handleFeaturedFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Only image files are allowed.");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewFeaturedImage(reader.result as string);
-        setPendingFeaturedFile(file);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Confirm adding the previewed featured image
-  const handleConfirmAddFeatured = () => {
-    if (previewFeaturedImage) {
-      const newImage = { url: previewFeaturedImage, alt: `Featured project ${featuredImages.length + 1}` };
-      const updated = [...featuredImages, newImage];
-      setFeaturedImages(updated);
-      localStorage.setItem('featured_project_images', JSON.stringify(updated));
-      setPreviewFeaturedImage(null);
-      setPendingFeaturedFile(null);
-      toast.success("Featured project image added successfully!");
-    }
-  };
-
-  // Cancel preview for featured image
-  const handleCancelPreviewFeatured = () => {
-    setPreviewFeaturedImage(null);
-    setPendingFeaturedFile(null);
-  };
-
-  // Delete featured image handler
-  const handleDeleteFeaturedImage = (index: number) => {
-    setFeaturedImages((prev) => {
-      const newImages = prev.filter((_, i) => i !== index);
-      localStorage.setItem('featured_project_images', JSON.stringify(newImages));
-      return newImages;
-    });
-    toast.success("Featured project image deleted successfully!");
-  };
-
-  // Featured Projects background image state
-  const [featuredBg, setFeaturedBg] = useState<string | null>(null);
-  const [previewFeaturedBg, setPreviewFeaturedBg] = useState<string | null>(null);
-  const [pendingFeaturedBgFile, setPendingFeaturedBgFile] = useState<File | null>(null);
-  const featuredBgFileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Load featured bg from localStorage on mount
-  React.useEffect(() => {
-    const saved = localStorage.getItem('featured_project_bg');
-    if (saved) setFeaturedBg(saved);
-  }, []);
-
-  // Add featured bg handler
-  const handleAddFeaturedBg = () => {
-    if (featuredBgFileInputRef.current) {
-      featuredBgFileInputRef.current.value = "";
-      featuredBgFileInputRef.current.click();
-    }
-  };
-
-  // Validate and preview featured bg before adding
-  const handleFeaturedBgFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files && e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Only image files are allowed.");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewFeaturedBg(reader.result as string);
-        setPendingFeaturedBgFile(file);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Confirm adding the previewed featured bg
-  const handleConfirmAddFeaturedBg = () => {
-    if (previewFeaturedBg) {
-      setFeaturedBg(previewFeaturedBg);
-      localStorage.setItem('featured_project_bg', previewFeaturedBg);
-      setPreviewFeaturedBg(null);
-      setPendingFeaturedBgFile(null);
-      toast.success("Featured project background image set successfully!");
-    }
-  };
-
-  // Cancel preview for featured bg
-  const handleCancelPreviewFeaturedBg = () => {
-    setPreviewFeaturedBg(null);
-    setPendingFeaturedBgFile(null);
-  };
-
-  // Delete featured bg handler
-  const handleDeleteFeaturedBg = () => {
-    setFeaturedBg(null);
-    localStorage.removeItem('featured_project_bg');
-    toast.success("Featured project background image removed!");
-  };
-
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -408,7 +284,6 @@ const AdminPages = () => {
           <TabsTrigger value="about">About Us</TabsTrigger>
           <TabsTrigger value="mission">Mission & Vision</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
-          <TabsTrigger value="featured">Featured Projects</TabsTrigger>
         </TabsList>
         
         <TabsContent value="home">
@@ -422,6 +297,9 @@ const AdminPages = () => {
             <CardContent className="space-y-6">
               <div>
                 <h3 className="text-lg font-medium mb-4">Hero Banner Images</h3>
+                <div className="mb-2 text-sm text-muted-foreground">
+                  To set featured project images, upload them in order in the Home section. The 6th image onward will be used for featured projects.
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {heroImages.map((img, index) => (
                     <div key={index} className="relative group">
@@ -712,102 +590,6 @@ const AdminPages = () => {
               <p className="text-center text-muted-foreground py-8">
                 Content editor for Contact page would appear here.
               </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="featured">
-          <Card>
-            <CardHeader>
-              <CardTitle>Featured Projects Images</CardTitle>
-              <CardDescription>
-                Upload and manage images for the Featured Projects section on the main website.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-4">Featured Project Images</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {featuredImages.map((img, index) => (
-                    <div key={index} className="relative group">
-                      <div className="aspect-[16/9] bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden">
-                        <img 
-                          src={img.url}
-                          alt={img.alt}
-                          className="w-full h-full object-cover transition-opacity"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteFeaturedImage(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="aspect-[16/9] bg-gray-100 dark:bg-gray-800 rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center p-4">
-                    <Button variant="outline" size="sm" onClick={handleAddFeaturedImage}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Image
-                    </Button>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={featuredFileInputRef}
-                      style={{ display: "none" }}
-                      onChange={handleFeaturedFileChange}
-                    />
-                  </div>
-                </div>
-                {/* Preview modal for image before adding */}
-                {previewFeaturedImage && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-                      <img src={previewFeaturedImage} alt="Preview" className="max-w-xs max-h-60 mb-4 rounded" />
-                      <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleCancelPreviewFeatured}>Cancel</Button>
-                        <Button onClick={handleConfirmAddFeatured}>Add</Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h3 className="text-lg font-medium mb-4">Background Image</h3>
-                {featuredBg ? (
-                  <div className="relative group w-full max-w-md">
-                    <img src={featuredBg} alt="Featured Projects Background" className="rounded-lg shadow w-full object-cover" />
-                    <Button variant="destructive" size="sm" className="absolute top-2 right-2" onClick={handleDeleteFeaturedBg}>
-                      <Trash2 className="h-4 w-4" /> Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6">
-                    <Button variant="outline" size="sm" onClick={handleAddFeaturedBg}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Background Image
-                    </Button>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={featuredBgFileInputRef}
-                      style={{ display: "none" }}
-                      onChange={handleFeaturedBgFileChange}
-                    />
-                  </div>
-                )}
-                {/* Preview modal for bg image before adding */}
-                {previewFeaturedBg && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-                      <img src={previewFeaturedBg} alt="Preview" className="max-w-xs max-h-60 mb-4 rounded" />
-                      <div className="flex gap-2">
-                        <Button variant="outline" onClick={handleCancelPreviewFeaturedBg}>Cancel</Button>
-                        <Button onClick={handleConfirmAddFeaturedBg}>Add</Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

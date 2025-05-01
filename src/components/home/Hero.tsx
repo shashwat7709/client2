@@ -3,26 +3,16 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const Hero = () => {
-  const [heroImages, setHeroImages] = useState<any[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [mainImage, setMainImage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load hero images from localStorage
+    // Load the first hero image from localStorage
     const savedImages = localStorage.getItem('hero_images');
     if (savedImages) {
-      setHeroImages(JSON.parse(savedImages));
+      const arr = JSON.parse(savedImages);
+      setMainImage(arr[0]?.url || null);
     }
   }, []);
-
-  // Auto-rotate images every 5 seconds if there are multiple images
-  useEffect(() => {
-    if (heroImages.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [heroImages.length]);
 
   return (
     <div className="relative bg-gradient-to-br from-primary to-primary/90 text-white">
@@ -63,15 +53,15 @@ const Hero = () => {
           <div className="hidden lg:block">
             <div className="relative">
               <div className="absolute -top-10 -left-10 w-full h-full bg-accent/20 rounded-lg transform rotate-3"></div>
-              {heroImages.length > 0 ? (
+              {mainImage ? (
                 <img 
-                  src={heroImages[currentImageIndex]?.url} 
-                  alt={heroImages[currentImageIndex]?.alt || "Hero banner"} 
+                  src={mainImage} 
+                  alt="Hero banner" 
                   className="rounded-lg shadow-xl relative z-10 w-full h-auto object-cover"
                 />
               ) : (
                 <div className="w-full h-64 bg-gray-200 rounded-lg shadow-xl relative z-10 flex items-center justify-center text-gray-400">
-                  No hero images available
+                  No hero image available
                 </div>
               )}
             </div>

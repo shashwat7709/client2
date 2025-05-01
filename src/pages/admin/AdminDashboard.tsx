@@ -4,10 +4,35 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { useWebsiteStats } from "@/hooks/useWebsiteStats";
+import { useState } from "react";
 
 const AdminDashboard = () => {
   const { visitsToday, pendingMessages, lastChecked } = useWebsiteStats();
-  
+  const [mainImage, setMainImage] = useState(() => {
+    const saved = localStorage.getItem('hero_images');
+    if (saved) {
+      const arr = JSON.parse(saved);
+      return arr[0]?.url || '';
+    }
+    return '';
+  });
+  const [preview, setPreview] = useState(mainImage);
+  const [uploading, setUploading] = useState(false);
+
+  const handleMainImageUpload = (file: File) => {
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setPreview(base64);
+      // Save to localStorage as [{ url, alt }]
+      localStorage.setItem('hero_images', JSON.stringify([{ url: base64, alt: 'Main Page Image' }]));
+      setMainImage(base64);
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const quickAccessModules = [
     { name: "Pages", icon: File, link: "/admin/pages", description: "Manage website pages" },
     { name: "Products", icon: Package, link: "/admin/products", description: "Update product listings" },
@@ -73,6 +98,41 @@ const AdminDashboard = () => {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Main Page Image Card */}
+      <Card className="mb-8">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <Image className="h-5 w-5" />
+            Main Page Image
+          </CardTitle>
+          <CardDescription>Manage the main image shown on the website home page.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="w-64 h-40 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden">
+              {preview ? (
+                <img src={preview} alt="Main Page Preview" className="object-contain w-full h-full" />
+              ) : (
+                <span className="text-gray-400">No image set</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) handleMainImageUpload(file);
+                }}
+                disabled={uploading}
+              />
+              {uploading && <span className="text-sm text-muted-foreground">Uploading...</span>}
+              <span className="text-xs text-muted-foreground">Recommended size: 800x600px or larger</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

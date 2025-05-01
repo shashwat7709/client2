@@ -23,23 +23,18 @@ const projects = [
   }
 ];
 
-const NUM_CATEGORIES = 4; // This should match the number of categories in ProductCategories
-
 const FeaturedProjects = () => {
-  const [featuredImages, setFeaturedImages] = useState<any[]>([]);
+  const [featuredProductImages, setFeaturedProductImages] = useState<any[]>([]);
   const [featuredBg, setFeaturedBg] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedImages = localStorage.getItem('featured_project_images');
+    const savedImages = localStorage.getItem('featured_product_images');
     if (savedImages) {
-      setFeaturedImages(JSON.parse(savedImages));
+      setFeaturedProductImages(JSON.parse(savedImages));
     }
     const savedBg = localStorage.getItem('featured_project_bg');
     if (savedBg) setFeaturedBg(savedBg);
   }, []);
-
-  // Use all featured images directly
-  const projectImages = featuredImages;
 
   return (
     <section
@@ -67,10 +62,10 @@ const FeaturedProjects = () => {
           {projects.map((project, index) => (
             <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="h-64 overflow-hidden">
-                {projectImages[index] ? (
+                {featuredProductImages[index] ? (
                   <img
-                    src={projectImages[index].url}
-                    alt={projectImages[index].alt || project.title}
+                    src={featuredProductImages[index].url}
+                    alt={featuredProductImages[index].alt || project.title}
                     className="w-full h-full object-cover"
                   />
                 ) : (

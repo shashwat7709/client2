@@ -23,7 +23,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import AboutUs from "@/pages/admin/AboutUs";
 import ContactUs from "@/pages/admin/ContactUs";
 import MissionsAndServices from "@/pages/admin/MissionsAndServices";
-import { supabase } from "@/lib/utils";
 
 const productCategories = [
   "Admixtures",
@@ -160,31 +159,24 @@ const AdminProducts = () => {
   const handleTdsUpload = async (file: File, productId: string) => {
     try {
       setUploading(true);
-      // Upload to Supabase Storage (bucket: 'tds')
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${productId}-${Date.now()}.${fileExt}`;
-      const { data, error } = await supabase.storage.from('tds').upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: true,
-      });
-      if (error) throw error;
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage.from('tds').getPublicUrl(fileName);
-      const tdsUrl = publicUrlData.publicUrl;
-      // Update the product's tdsUrl in your backend or localStorage
-      // Example: update in localStorage for public site
-      const adminCategories = JSON.parse(localStorage.getItem('admin_categories') || '[]');
-      for (const cat of adminCategories) {
-        for (const prod of cat.products) {
-          if (prod.id === productId) {
-            prod.tdsUrl = tdsUrl;
+      // Convert file to base64 for storage
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        // Store in localStorage
+        const adminCategories = JSON.parse(localStorage.getItem('admin_categories') || '[]');
+        for (const cat of adminCategories) {
+          for (const prod of cat.products) {
+            if (prod.id === productId) {
+              prod.tdsUrl = base64String;
+            }
           }
         }
-      }
-      localStorage.setItem('admin_categories', JSON.stringify(adminCategories));
-      // Optionally, update in your backend here if you have an API
-      fetchProducts();
-      toast.success("TDS uploaded successfully!");
+        localStorage.setItem('admin_categories', JSON.stringify(adminCategories));
+        fetchProducts();
+        toast.success("TDS uploaded successfully!");
+      };
     } catch (error) {
       toast.error("Failed to upload TDS");
       console.error(error);

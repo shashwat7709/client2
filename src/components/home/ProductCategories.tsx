@@ -53,10 +53,10 @@ const ProductCategories = () => {
           {categories.map((category, idx) => (
             <div key={category.id} className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:-translate-y-1 hover:shadow-lg">
               <div className="h-48 overflow-hidden">
-                {heroImages[idx] ? (
+                {heroImages[idx + 1] ? (
                   <img 
-                    src={heroImages[idx].url} 
-                    alt={heroImages[idx].alt || category.name} 
+                    src={heroImages[idx + 1].url} 
+                    alt={heroImages[idx + 1].alt || category.name} 
                     className="w-full h-full object-cover"
                   />
                 ) : (
