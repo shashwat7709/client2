@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import React from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link as RouterLink } from "react-router-dom";
+import { uploadHeroImage, fetchHeroImages, deleteHeroImage } from "@/lib/supabaseImages";
 
 const AdminPages = () => {
   const [currentTab, setCurrentTab] = useState("home");
@@ -16,13 +17,32 @@ const AdminPages = () => {
   // For previewing selected image before adding
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Add image handler (file input for local upload)
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Fetch hero images from Supabase on mount
+  useEffect(() => {
+    const loadImages = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const images = await fetchHeroImages();
+        setHeroImages(images);
+      } catch (err: any) {
+        setError("Failed to load images");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadImages();
+  }, []);
+
   const handleAddImage = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset file input
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
   };
@@ -50,28 +70,29 @@ const AdminPages = () => {
 
   const MAX_HERO_IMAGES = 11;
 
-  // Add this function to reload heroImages from localStorage
-  const reloadHeroImages = () => {
-    const saved = localStorage.getItem('hero_images');
-    if (saved) setHeroImages(JSON.parse(saved));
-  };
-
-  // Confirm adding the previewed image
-  const handleConfirmAdd = () => {
-    if (previewImage) {
+  // Confirm adding the previewed image (upload to Supabase)
+  const handleConfirmAdd = async () => {
+    if (pendingFile) {
       if (heroImages.length >= MAX_HERO_IMAGES) {
         toast.error(`Maximum image limit of ${MAX_HERO_IMAGES} reached. Please remove an image before adding a new one.`);
         return;
       }
-      const newImage = { url: previewImage, alt: `Hero banner ${heroImages.length + 1}` };
-      const updated = [...heroImages, newImage];
-      setHeroImages(updated);
-      // Save to localStorage
-      localStorage.setItem('hero_images', JSON.stringify(updated));
-      reloadHeroImages();
-      setPreviewImage(null);
-      setPendingFile(null);
-      toast.success("Image added successfully!");
+      setLoading(true);
+      setError(null);
+      try {
+        await uploadHeroImage(pendingFile, `Hero banner ${heroImages.length + 1}`);
+        toast.success("Image added successfully!");
+        // Reload images
+        const images = await fetchHeroImages();
+        setHeroImages(images);
+        setPreviewImage(null);
+        setPendingFile(null);
+      } catch (err: any) {
+        setError("Failed to upload image");
+        toast.error("Failed to upload image");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -81,16 +102,23 @@ const AdminPages = () => {
     setPendingFile(null);
   };
 
-  // Delete image handler
-  const handleDeleteImage = (index: number) => {
-    setHeroImages((prev) => {
-      const newImages = prev.filter((_, i) => i !== index);
-      // Update localStorage
-      localStorage.setItem('hero_images', JSON.stringify(newImages));
-      reloadHeroImages();
-      return newImages;
-    });
-    toast.success("Image deleted successfully!");
+  // Delete image handler (Supabase)
+  const handleDeleteImage = async (index: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const img = heroImages[index];
+      await deleteHeroImage(img.id, img.url);
+      toast.success("Image deleted successfully!");
+      // Reload images
+      const images = await fetchHeroImages();
+      setHeroImages(images);
+    } catch (err: any) {
+      setError("Failed to delete image");
+      toast.error("Failed to delete image");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Mock save function

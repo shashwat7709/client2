@@ -1,17 +1,26 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { fetchHeroImages } from "@/lib/supabaseImages";
 
 const Hero = () => {
   const [mainImage, setMainImage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load the first hero image from localStorage
-    const savedImages = localStorage.getItem('hero_images');
-    if (savedImages) {
-      const arr = JSON.parse(savedImages);
-      setMainImage(arr[0]?.url || null);
-    }
+    // Fetch the first hero image from Supabase
+    const loadImage = async () => {
+      try {
+        const images = await fetchHeroImages();
+        const url = images[0]?.url || null;
+        if (url && !url.includes('/public/')) {
+          console.warn('Hero image URL is missing /public/:', url);
+        }
+        setMainImage(url);
+      } catch {
+        setMainImage(null);
+      }
+    };
+    loadImage();
   }, []);
 
   return (
