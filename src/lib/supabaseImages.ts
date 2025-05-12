@@ -42,9 +42,21 @@ export async function fetchHeroImages() {
 
 // Delete image from storage and table
 export async function deleteHeroImage(id: number, url: string) {
-  // Extract file name from URL
-  const fileName = url.split('/').pop();
-  await supabase.storage.from(BUCKET).remove([fileName]);
+  // Extract the file path after /object/hero-images/ or /object/public/hero-images/
+  let filePath = url;
+  try {
+    const urlObj = new URL(url);
+    const match = urlObj.pathname.match(/object\/(?:public\/)?hero-images\/(.*)$/);
+    if (match && match[1]) {
+      filePath = match[1];
+    } else {
+      filePath = url.split('/').pop();
+    }
+  } catch (e) {
+    // fallback for non-URL strings
+    filePath = url.split('/').pop();
+  }
+  await supabase.storage.from(BUCKET).remove([filePath]);
   const { error } = await supabase.from(TABLE).delete().eq('id', id);
   if (error) throw error;
 }

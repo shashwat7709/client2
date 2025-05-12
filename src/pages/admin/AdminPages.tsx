@@ -103,21 +103,30 @@ const AdminPages = () => {
   };
 
   // Delete image handler (Supabase)
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const handleDeleteImage = async (index: number) => {
-    setLoading(true);
-    setError(null);
+    setDeleteError(null);
+    const img = heroImages[index];
+    // Optimistically remove from UI
+    const newImages = heroImages.filter((image) => image.id !== img.id);
+    setHeroImages(newImages);
+    setDeletingId(img.id);
+
     try {
-      const img = heroImages[index];
       await deleteHeroImage(img.id, img.url);
       toast.success("Image deleted successfully!");
-      // Reload images
-      const images = await fetchHeroImages();
-      setHeroImages(images);
-    } catch (err: any) {
-      setError("Failed to delete image");
+    } catch (err) {
+      // Restore the image if deletion fails
+      setHeroImages((prev) => [
+        ...prev.slice(0, index),
+        img,
+        ...prev.slice(index),
+      ]);
+      setDeleteError("Failed to delete image");
       toast.error("Failed to delete image");
     } finally {
-      setLoading(false);
+      setDeletingId(null);
     }
   };
 
@@ -378,8 +387,18 @@ const AdminPages = () => {
                         <Button variant="secondary" size="sm">
                           <FileEdit className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteImage(index)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteImage(index)} disabled={deletingId === img.id}>
+                          {deletingId === img.id ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin h-4 w-4 mr-1" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                              </svg>
+                              Deleting...
+                            </span>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     </div>
