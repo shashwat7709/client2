@@ -33,10 +33,21 @@ const ProductCategories = () => {
   const [heroImages, setHeroImages] = useState<any[]>([]);
 
   useEffect(() => {
-    const savedImages = localStorage.getItem('hero_images');
-    if (savedImages) {
-      setHeroImages(JSON.parse(savedImages));
-    }
+    // Load hero images from localStorage
+    const loadImages = () => {
+      try {
+        const savedImages = localStorage.getItem('hero_images');
+        if (savedImages) {
+          setHeroImages(JSON.parse(savedImages));
+        } else {
+          setHeroImages([]);
+        }
+      } catch (e) {
+        console.error("Failed to load hero images from localStorage:", e);
+        setHeroImages([]);
+      }
+    };
+    loadImages();
   }, []);
 
   return (

@@ -1,30 +1,47 @@
 import { ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { fetchHeroImages } from "@/lib/supabaseImages";
+import { supabase } from "@/lib/supabaseClient";
 
 const Hero = () => {
-  const [mainImage, setMainImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    // Fetch the first hero image from Supabase
-    const loadImage = async () => {
-      try {
-        const images = await fetchHeroImages();
-        const url = images[0]?.url || null;
-        if (url && !url.includes('/public/')) {
-          console.warn('Hero image URL is missing /public/:', url);
-        }
-        setMainImage(url);
-      } catch {
-        setMainImage(null);
+    // Fetch all hero images from Supabase
+    const fetchImages = async () => {
+      const { data, error } = await supabase
+        .from("hero_images")
+        .select("url")
+        .order("created_at", { ascending: false });
+      if (data) {
+        setImages(data.map((img: any) => img.url));
       }
     };
-    loadImage();
+    fetchImages();
   }, []);
 
+  useEffect(() => {
+    if (images.length < 2) return;
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [images]);
+
+  const mainImage = images[current] || null;
+
   return (
-    <div className="relative bg-gradient-to-br from-primary to-primary/90 text-white">
+    <div
+      className="relative bg-gradient-to-br from-primary to-primary/90 text-white"
+      style={mainImage ? {
+        backgroundImage: `url(${mainImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        transition: 'background-image 0.5s ease-in-out',
+      } : {}}
+    >
       {/* Abstract background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute right-0 bottom-0 w-1/2 h-1/2 bg-white/10 rounded-tl-full" />
@@ -58,38 +75,6 @@ const Hero = () => {
                 Contact Us
               </Link>
             </div>
-          </div>
-          <div className="hidden lg:block">
-            <div className="relative">
-              <div className="absolute -top-10 -left-10 w-full h-full bg-accent/20 rounded-lg transform rotate-3"></div>
-              {mainImage ? (
-                <img 
-                  src={mainImage} 
-                  alt="Hero banner" 
-                  className="rounded-lg shadow-xl relative z-10 w-full h-auto object-cover"
-                />
-              ) : (
-                <div className="w-full h-64 bg-gray-200 rounded-lg shadow-xl relative z-10 flex items-center justify-center text-gray-400">
-                  No hero image available
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Highlight boxes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-            <h3 className="font-semibold text-xl mb-2">Quality Assurance</h3>
-            <p className="text-white/80">All products undergo rigorous testing to meet international standards.</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-            <h3 className="font-semibold text-xl mb-2">Technical Support</h3>
-            <p className="text-white/80">Expert consultation and support throughout your project lifecycle.</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-            <h3 className="font-semibold text-xl mb-2">Sustainable Solutions</h3>
-            <p className="text-white/80">Environmentally conscious products for modern construction needs.</p>
           </div>
         </div>
       </div>

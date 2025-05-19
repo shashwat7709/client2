@@ -7,14 +7,14 @@ import { toast } from "sonner";
 import React from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link as RouterLink } from "react-router-dom";
-import { uploadHeroImage, fetchHeroImages, deleteHeroImage } from "@/lib/supabaseImages";
+import { supabase } from "@/lib/supabaseClient";
+import { deleteHeroImage } from "@/lib/supabaseImages";
 
 const AdminPages = () => {
   const [currentTab, setCurrentTab] = useState("home");
 
   // Hero banner images state (start empty)
   const [heroImages, setHeroImages] = useState<any[]>([]);
-  // For previewing selected image before adding
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,21 +23,21 @@ const AdminPages = () => {
   // Add image handler (file input for local upload)
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Fetch hero images from Supabase on mount
+  // Load hero images from Supabase on mount
   useEffect(() => {
-    const loadImages = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const images = await fetchHeroImages();
-        setHeroImages(images);
-      } catch (err: any) {
-        setError("Failed to load images");
-      } finally {
-        setLoading(false);
+    const fetchImages = async () => {
+      const { data, error } = await supabase
+        .from("hero_images")
+        .select("id, url, alt, created_at")
+        .order("created_at", { ascending: false });
+      if (error) {
+        setError("Failed to fetch images");
+        setHeroImages([]);
+      } else {
+        setHeroImages(data || []);
       }
     };
-    loadImages();
+    fetchImages();
   }, []);
 
   const handleAddImage = () => {
@@ -55,16 +55,12 @@ const AdminPages = () => {
         toast.error("Only image files are allowed.");
         return;
       }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         toast.error("Image size should be less than 5MB.");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result as string);
+      setPreviewImage(URL.createObjectURL(file));
         setPendingFile(file);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -79,18 +75,52 @@ const AdminPages = () => {
       }
       setLoading(true);
       setError(null);
+      const fileToUpload = pendingFile;
       try {
-        await uploadHeroImage(pendingFile, `Hero banner ${heroImages.length + 1}`);
-        toast.success("Image added successfully!");
-        // Reload images
-        const images = await fetchHeroImages();
-        setHeroImages(images);
-        setPreviewImage(null);
-        setPendingFile(null);
+        const fileExt = fileToUpload.name.split('.').pop();
+        const fileName = `hero_${Date.now()}.${fileExt}`;
+        const filePath = `hero_images/${fileName}`;
+        // Upload to storage
+        const { data: storageData, error: storageError } = await supabase.storage
+          .from("hero-images")
+          .upload(filePath, fileToUpload);
+        if (storageError) {
+          setLoading(false);
+          toast.error("Failed to upload image: " + storageError.message);
+          return;
+        }
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from("hero-images")
+          .getPublicUrl(filePath);
+        const url = publicUrlData?.publicUrl;
+        if (!url) {
+          setLoading(false);
+          toast.error("Failed to get public URL for image.");
+          return;
+        }
+        // Insert into hero_images table
+        const { error: insertError } = await supabase.from("hero_images").insert([
+          { url, alt: `Hero banner ${heroImages.length + 1}` }
+        ]);
+        if (insertError) {
+          setLoading(false);
+          toast.error("Failed to save image info: " + insertError.message);
+          return;
+        }
+        // Refresh images
+        const { data: newData } = await supabase
+          .from("hero_images")
+          .select("id, url, alt, created_at")
+          .order("created_at", { ascending: false });
+        setHeroImages(newData || []);
+          toast.success("Image added successfully!");
+          setPreviewImage(null);
+          setPendingFile(null);
+          setLoading(false);
       } catch (err: any) {
         setError("Failed to upload image");
         toast.error("Failed to upload image");
-      } finally {
         setLoading(false);
       }
     }
@@ -108,21 +138,22 @@ const AdminPages = () => {
   const handleDeleteImage = async (index: number) => {
     setDeleteError(null);
     const img = heroImages[index];
-    // Optimistically remove from UI
-    const newImages = heroImages.filter((image) => image.id !== img.id);
-    setHeroImages(newImages);
     setDeletingId(img.id);
-
     try {
-      await deleteHeroImage(img.id, img.url);
+      const { error } = await deleteHeroImage(img.url);
+      if (error) {
+        setDeleteError("Failed to delete image");
+        toast.error("Failed to delete image");
+      } else {
+        // Refresh images
+        const { data: newData } = await supabase
+          .from("hero_images")
+          .select("id, url, alt, created_at")
+          .order("created_at", { ascending: false });
+        setHeroImages(newData || []);
       toast.success("Image deleted successfully!");
+      }
     } catch (err) {
-      // Restore the image if deletion fails
-      setHeroImages((prev) => [
-        ...prev.slice(0, index),
-        img,
-        ...prev.slice(index),
-      ]);
       setDeleteError("Failed to delete image");
       toast.error("Failed to delete image");
     } finally {
@@ -375,7 +406,7 @@ const AdminPages = () => {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {heroImages.map((img, index) => (
-                    <div key={index} className="relative group">
+                    <div key={img.id} className="relative group">
                       <div className="aspect-[16/9] bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden">
                         <img 
                           src={img.url}
@@ -424,7 +455,7 @@ const AdminPages = () => {
                       <img src={previewImage} alt="Preview" className="max-w-xs max-h-60 mb-4 rounded" />
                       <div className="flex gap-2">
                         <Button variant="outline" onClick={handleCancelPreview}>Cancel</Button>
-                        <Button onClick={handleConfirmAdd}>Add</Button>
+                        <Button onClick={handleConfirmAdd} disabled={loading}>Add</Button>
                       </div>
                     </div>
                   </div>
@@ -456,167 +487,6 @@ const AdminPages = () => {
                     />
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-4">Highlight Sections</h3>
-                {/* This would be a more complex component in a real app */}
-                <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-md">
-                  <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                    [Highlight section editor would go here]
-                  </p>
-                </div>
-              </div>
-
-              {/* Product Summary Cards (like image 2) */}
-              <div className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categories.map(category =>
-                  category.products.map(product => (
-                    <RouterLink
-                      key={product.id}
-                      to={`/admin/pages/products/${product.id}`}
-                      state={{ categories }}
-                      className="bg-white rounded-lg shadow p-4 flex flex-col items-center hover:shadow-lg transition-shadow"
-                    >
-                      {product.images[0] ? (
-                        <img src={product.images[0]} alt={product.name} className="w-24 h-24 object-cover rounded mb-2" />
-                      ) : (
-                        <div className="w-24 h-24 bg-gray-200 rounded mb-2 flex items-center justify-center text-gray-400">No Image</div>
-                      )}
-                      <div className="font-semibold text-center mb-1">{product.name}</div>
-                      <div className="text-sm text-muted-foreground text-center mb-2">{product.description}</div>
-                    </RouterLink>
-                  ))
-                )}
-              </div>
-
-              {/* Products Section (Accordion) */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Products</h3>
-                <Accordion type="multiple" className="mb-6">
-                  {categories.map((category, catIdx) => (
-                    <AccordionItem value={category.id} key={category.id}>
-                      <AccordionTrigger>
-                        <div>
-                          <div className="font-semibold text-xl">{category.name}</div>
-                          <div className="text-muted-foreground text-sm">{category.products.length} Products</div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="mb-4 text-muted-foreground">{category.description}</div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {category.products.map((product, prodIdx) => (
-                            <div key={product.id} className="border rounded-lg p-4 bg-gray-50 flex flex-col">
-                              <RouterLink
-                                to={`/admin/pages/products/${product.id}`}
-                                state={{ categories }}
-                                className="font-medium mb-2 hover:underline block"
-                              >
-                                {product.name}
-                              </RouterLink>
-                              <div className="flex flex-wrap gap-2 mb-2">
-                                {product.images.map((img, imgIdx) => (
-                                  <div key={imgIdx} className="relative inline-block">
-                                    <img src={img} alt="Product" className="w-16 h-16 object-cover rounded" />
-                                    <button
-                                      type="button"
-                                      className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow hover:bg-red-100"
-                                      onClick={() => handleDeleteProductImage(catIdx, prodIdx, imgIdx)}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-red-500" />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => productFileInputRefs.current[`${catIdx}-${prodIdx}`]?.click()}
-                              >
-                                <Plus className="h-4 w-4 mr-2" /> Add Image
-                              </Button>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                ref={el => (productFileInputRefs.current[`${catIdx}-${prodIdx}`] = el)}
-                                style={{ display: "none" }}
-                                onChange={e => handleProductImageChange(catIdx, prodIdx, e)}
-                              />
-                              <textarea
-                                className="mt-3 p-2 border rounded text-sm resize-vertical min-h-[60px]"
-                                placeholder="Enter product description..."
-                                value={product.description || ""}
-                                onChange={e => {
-                                  const newDesc = e.target.value;
-                                  setCategories(prev => prev.map((cat, i) =>
-                                    i === catIdx
-                                      ? {
-                                          ...cat,
-                                          products: cat.products.map((prod, j) =>
-                                            j === prodIdx ? { ...prod, description: newDesc } : prod
-                                          )
-                                        }
-                                      : cat
-                                  ));
-                                }}
-                              />
-                              <div className="flex gap-2 mt-2">
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    // Delete all images for this product
-                                    setCategories(prev => prev.map((cat, i) =>
-                                      i === catIdx
-                                        ? {
-                                            ...cat,
-                                            products: cat.products.map((prod, j) =>
-                                              j === prodIdx ? { ...prod, images: [] } : prod
-                                            )
-                                          }
-                                        : cat
-                                    ));
-                                    // Remove from localStorage for public page
-                                    const prod = categories[catIdx].products[prodIdx];
-                                    if (prod) {
-                                      localStorage.removeItem(`public_product_images_${prod.id}`);
-                                    }
-                                  }}
-                                >
-                                  Delete All Images
-                                </Button>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => {
-                                    // Delete description for this product
-                                    setCategories(prev => prev.map((cat, i) =>
-                                      i === catIdx
-                                        ? {
-                                            ...cat,
-                                            products: cat.products.map((prod, j) =>
-                                              j === prodIdx ? { ...prod, description: "" } : prod
-                                            )
-                                          }
-                                        : cat
-                                    ));
-                                    // Remove from localStorage for public page
-                                    const prod = categories[catIdx].products[prodIdx];
-                                    if (prod) {
-                                      localStorage.removeItem(`public_product_description_${prod.id}`);
-                                    }
-                                  }}
-                                >
-                                  Delete Description
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
               </div>
 
               <div className="flex justify-end">

@@ -1,69 +1,23 @@
-import { supabase } from './supabaseClient';
+import { supabase } from "./supabaseClient";
 
-const BUCKET = 'hero-images';
-const TABLE = 'hero_images';
+// Delete hero image from storage and table
+export async function deleteHeroImage(imageUrl: string) {
+  // Extract the path from the public URL
+  const url = new URL(imageUrl);
+  const pathParts = url.pathname.split("/");
+  // Find the bucket name and file path
+  // Example: /storage/v1/object/public/hero-images/filename.jpg
+  const bucketIndex = pathParts.indexOf("public") + 1;
+  const bucket = pathParts[bucketIndex - 1]; // should be 'hero-images'
+  const filePath = pathParts.slice(bucketIndex).join("/");
 
-// Upload image to Supabase Storage and insert metadata into the table
-export async function uploadHeroImage(file: File, alt: string) {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-  // Upload to storage
-  const { data: storageData, error: storageError } = await supabase.storage.from(BUCKET).upload(fileName, file);
-  if (storageError || !storageData) {
-    throw new Error('Failed to upload image to storage.');
-  }
-  // Get public URL
-  let publicUrl = supabase.storage.from(BUCKET).getPublicUrl(fileName).data.publicUrl;
-  // Ensure '/public/' is present in the URL after '/object/'
-  if (publicUrl && !publicUrl.includes('/object/public/')) {
-    publicUrl = publicUrl.replace('/object/', '/object/public/');
-  }
-  if (!publicUrl) {
-    // Clean up: remove file if URL generation fails
-    await supabase.storage.from(BUCKET).remove([fileName]);
-    throw new Error('Failed to generate public URL for image.');
-  }
-  // Insert metadata into DB
-  const { data: dbData, error: dbError } = await supabase.from(TABLE).insert([{ url: publicUrl, alt }]).select().single();
-  if (dbError) {
-    // Clean up: remove file if DB insert fails
-    await supabase.storage.from(BUCKET).remove([fileName]);
-    throw dbError;
-  }
-  return dbData;
-}
+  // Remove from storage
+  const { error: storageError } = await supabase.storage.from(bucket).remove([filePath]);
+  if (storageError) return { error: storageError };
 
-// Fetch all hero images
-export async function fetchHeroImages() {
-  const { data, error } = await supabase.from(TABLE).select('*').order('created_at', { ascending: true });
-  if (error) throw error;
-  return data;
-}
+  // Remove from table
+  const { error: tableError } = await supabase.from("hero_images").delete().eq("url", imageUrl);
+  if (tableError) return { error: tableError };
 
-// Delete image from storage and table
-export async function deleteHeroImage(id: number, url: string) {
-  // Extract the file path after /object/hero-images/ or /object/public/hero-images/
-  let filePath = url;
-  try {
-    const urlObj = new URL(url);
-    const match = urlObj.pathname.match(/object\/(?:public\/)?hero-images\/(.*)$/);
-    if (match && match[1]) {
-      filePath = match[1];
-    } else {
-      filePath = url.split('/').pop();
-    }
-  } catch (e) {
-    // fallback for non-URL strings
-    filePath = url.split('/').pop();
-  }
-  await supabase.storage.from(BUCKET).remove([filePath]);
-  const { error } = await supabase.from(TABLE).delete().eq('id', id);
-  if (error) throw error;
-}
-
-// Update image metadata (e.g., alt text)
-export async function updateHeroImage(id: number, updates: { alt?: string }) {
-  const { data, error } = await supabase.from(TABLE).update(updates).eq('id', id).select().single();
-  if (error) throw error;
-  return data;
+  return { error: null };
 } 
